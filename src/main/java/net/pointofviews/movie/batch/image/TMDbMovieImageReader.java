@@ -22,8 +22,8 @@ public class TMDbMovieImageReader {
     @Bean(name = "movieImageJpaReader")
     @StepScope
     public JpaPagingItemReader<Movie> movieImageJpaReader(EntityManagerFactory entityManagerFactory,
-                                                          @Value("#{jobExecutionContext['firstMoviePk']}") Long firstMoviePk,
-                                                          @Value("#{jobExecutionContext['lastMoviePk']}") Long lastMoviePk) {
+                                                          @Value("#{jobParameters['startMoviePk']}") Long startMoviePk,
+                                                          @Value("#{jobExecutionContext['endMoviePk']}") Long endMoviePk) {
 
         JpaPagingItemReader<Movie> reader = new JpaPagingItemReader<>() {
             @Override
@@ -41,16 +41,16 @@ public class TMDbMovieImageReader {
 
         reader.setQueryString("""
                 SELECT m FROM Movie m
-                WHERE m.id BETWEEN :firstMoviePk AND :lastMoviePk
+                WHERE m.id BETWEEN :startMoviePk AND :endMoviePk
                 """);
 
         reader.setParameterValues(Map.of(
-                "firstMoviePk", firstMoviePk,
-                "lastMoviePk", lastMoviePk
+                "startMoviePk", startMoviePk,
+                "endMoviePk", endMoviePk
         ));
         reader.setPageSize(100);
 
-        log.info("PK 범위로 영화 데이터를 읽습니다: firstMoviePk={}, lastMoviePk={}", firstMoviePk, lastMoviePk);
+        log.info("PK 범위로 영화 데이터를 읽습니다: startMoviePk={}, endMoviePk={}", startMoviePk, endMoviePk);
         return reader;
     }
 }

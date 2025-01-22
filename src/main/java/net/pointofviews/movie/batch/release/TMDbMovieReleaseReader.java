@@ -22,8 +22,8 @@ public class TMDbMovieReleaseReader {
     @Bean(name = "movieReleaseJpaReader")
     @StepScope
     public JpaPagingItemReader<Movie> movieReleaseJpaReader(EntityManagerFactory entityManagerFactory,
-                                                            @Value("#{jobExecutionContext['firstMoviePk']}") Long firstMoviePk,
-                                                            @Value("#{jobExecutionContext['lastMoviePk']}") Long lastMoviePk) {
+                                                            @Value("#{jobParameters['startMoviePk']}") Long startMoviePk,
+                                                            @Value("#{jobExecutionContext['endMoviePk']}") Long endMoviePk) {
         JpaPagingItemReader<Movie> reader = new JpaPagingItemReader<>() {
             @Override
             protected Movie doRead() throws Exception {
@@ -44,11 +44,11 @@ public class TMDbMovieReleaseReader {
         };
         reader.setEntityManagerFactory(entityManagerFactory);
 
-        reader.setQueryString("SELECT m FROM Movie m WHERE m.id BETWEEN :firstMoviePk AND :lastMoviePk AND m.released IS NULL");
-        reader.setParameterValues(Map.of("firstMoviePk", firstMoviePk, "lastMoviePk", lastMoviePk));
+        reader.setQueryString("SELECT m FROM Movie m WHERE m.id BETWEEN :startMoviePk AND :endMoviePk AND m.released IS NULL");
+        reader.setParameterValues(Map.of("startMoviePk", startMoviePk, "endMoviePk", endMoviePk));
         reader.setPageSize(100);
 
-        log.info("PK 범위로 영화 데이터를 읽습니다: firstMoviePk={}, lastMoviePk={}", firstMoviePk, lastMoviePk);
+        log.info("PK 범위로 영화 데이터를 읽습니다: startMoviePk={}, endMoviePk={}", startMoviePk, endMoviePk);
         return reader;
     }
 

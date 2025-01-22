@@ -48,7 +48,7 @@ public class TMDbMovieDiscoverWriter implements ItemWriter<List<BatchDiscoverMov
         List<Long> movieIds = batchInsertMovies(movies);
 
         if (!movieIds.isEmpty()) {
-            savePkRangeToExecutionContext(movieIds.get(0), movieIds.get(movieIds.size() - 1));
+            savePkRangeToExecutionContext(movieIds.get(movieIds.size() - 1));
         }
 
         int index = 0;
@@ -109,16 +109,11 @@ public class TMDbMovieDiscoverWriter implements ItemWriter<List<BatchDiscoverMov
         jdbcTemplate.batchUpdate(sql, genres);
     }
 
-    private void savePkRangeToExecutionContext(Long firstPk, Long lastPk) {
+    private void savePkRangeToExecutionContext(Long endPk) {
         StepExecution stepExecution = StepSynchronizationManager.getContext().getStepExecution();
         ExecutionContext jobExecutionContext = stepExecution.getJobExecution().getExecutionContext();
 
-        if (!jobExecutionContext.containsKey("firstMoviePk")) {
-            jobExecutionContext.put("firstMoviePk", firstPk);
-            log.info("첫 번째 청크의 첫 번째 영화 PK 저장: {}", firstPk);
-        }
-
-        jobExecutionContext.put("lastMoviePk", lastPk);
-        log.info("현재 청크의 마지막 영화 PK 저장: {}", lastPk);
+        jobExecutionContext.put("endMoviePk", endPk);
+        log.info("현재 청크의 마지막 영화 PK 저장: {}", endPk);
     }
 }

@@ -22,8 +22,8 @@ public class TMDbMovieCreditReader {
     @Bean(name = "movieCreditJpaReader")
     @StepScope
     public JpaPagingItemReader<Movie> movieCreditJpaReader(EntityManagerFactory entityManagerFactory,
-                                                           @Value("#{jobExecutionContext['firstMoviePk']}") Long firstMoviePk,
-                                                           @Value("#{jobExecutionContext['lastMoviePk']}") Long lastMoviePk) {
+                                                           @Value("#{jobParameters['startMoviePk']}") Long startMoviePk,
+                                                           @Value("#{jobExecutionContext['endMoviePk']}") Long endMoviePk) {
         JpaPagingItemReader<Movie> reader = new JpaPagingItemReader<>() {
             @Override
             protected Movie doRead() throws Exception {
@@ -40,12 +40,12 @@ public class TMDbMovieCreditReader {
         reader.setEntityManagerFactory(entityManagerFactory);
         reader.setQueryString("""
                     SELECT m FROM Movie m
-                    WHERE m.id BETWEEN :firstMoviePk AND :lastMoviePk
+                    WHERE m.id BETWEEN :startMoviePk AND :endMoviePk
                 """);
-        reader.setParameterValues(Map.of("firstMoviePk", firstMoviePk, "lastMoviePk", lastMoviePk));
+        reader.setParameterValues(Map.of("startMoviePk", startMoviePk, "endMoviePk", endMoviePk));
         reader.setPageSize(100);
 
-        log.info("Movie PK 범위로 Credit 데이터를 읽습니다: firstMoviePk={}, lastMoviePk={}", firstMoviePk, lastMoviePk);
+        log.info("Movie PK 범위로 Credit 데이터를 읽습니다: startMoviePk={}, endMoviePk={}", startMoviePk, endMoviePk);
         return reader;
     }
 }

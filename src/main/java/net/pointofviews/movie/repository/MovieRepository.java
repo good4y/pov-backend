@@ -2,7 +2,7 @@ package net.pointofviews.movie.repository;
 
 import net.pointofviews.curation.dto.response.ReadUserCurationMovieResponse;
 import net.pointofviews.movie.domain.Movie;
-import net.pointofviews.movie.dto.response.*;
+import net.pointofviews.movie.dto.response.MovieTrendingResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -38,41 +38,41 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
      * 검색
      */
     @Query(value = """
-    SELECT m.id AS id,
-           m.title AS title,
-           m.poster AS poster,
-           m.released AS released,
-           CASE WHEN :memberId IS NOT NULL AND EXISTS (
-               SELECT 1 FROM movie_like ml
-               WHERE ml.movie_id = m.id
-                 AND ml.member_id = :memberId
-                 AND ml.is_liked = true
-           ) THEN true ELSE false END AS isLiked,
-           COALESCE((
-               SELECT mlc.like_count
-               FROM movie_like_count mlc
-               WHERE mlc.movie_id = m.id
-           ), 0) AS movieLikeCount,
-           (SELECT COUNT(*)
-            FROM review r
-            WHERE r.movie_id = m.id AND r.disabled = false) AS movieReviewCount
-    FROM movie m
-    WHERE MATCH(m.title) AGAINST(:query IN BOOLEAN MODE)
-       OR EXISTS (
-           SELECT 1
-           FROM people p
-           JOIN movie_cast mc ON mc.people_id = p.id
-           WHERE MATCH(p.name) AGAINST(:query IN BOOLEAN MODE)
-             AND mc.movie_id = m.id
-       )
-       OR EXISTS (
-           SELECT 1
-           FROM people p
-           JOIN movie_crew mcr ON mcr.people_id = p.id
-           WHERE MATCH(p.name) AGAINST(:query IN BOOLEAN MODE)
-             AND mcr.movie_id = m.id
-       )
-    """,
+            SELECT m.id AS id,
+                   m.title AS title,
+                   m.poster AS poster,
+                   m.released AS released,
+                   CASE WHEN :memberId IS NOT NULL AND EXISTS (
+                       SELECT 1 FROM movie_like ml
+                       WHERE ml.movie_id = m.id
+                         AND ml.member_id = :memberId
+                         AND ml.is_liked = true
+                   ) THEN true ELSE false END AS isLiked,
+                   COALESCE((
+                       SELECT mlc.like_count
+                       FROM movie_like_count mlc
+                       WHERE mlc.movie_id = m.id
+                   ), 0) AS movieLikeCount,
+                   (SELECT COUNT(*)
+                    FROM review r
+                    WHERE r.movie_id = m.id AND r.disabled = false) AS movieReviewCount
+            FROM movie m
+            WHERE MATCH(m.title) AGAINST(:query IN BOOLEAN MODE)
+               OR EXISTS (
+                   SELECT 1
+                   FROM people p
+                   JOIN movie_cast mc ON mc.people_id = p.id
+                   WHERE MATCH(p.name) AGAINST(:query IN BOOLEAN MODE)
+                     AND mc.movie_id = m.id
+               )
+               OR EXISTS (
+                   SELECT 1
+                   FROM people p
+                   JOIN movie_crew mcr ON mcr.people_id = p.id
+                   WHERE MATCH(p.name) AGAINST(:query IN BOOLEAN MODE)
+                     AND mcr.movie_id = m.id
+               )
+            """,
             nativeQuery = true)
     Slice<Object[]> searchMoviesByTitleOrPeople(@Param("query") String query, @Param("memberId") UUID memberId, Pageable pageable);
 
@@ -121,30 +121,33 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     Optional<Movie> findMovieByTmdbId(Integer tmdbId);
 
     @Query("""
-        SELECT new net.pointofviews.movie.dto.response.MovieTrendingResponse(
-            m.id,
-            m.title,
-            m.poster,
-            m.released,
-            CASE
-                WHEN :memberId IS NOT NULL AND EXISTS (
-                    SELECT 1
-                    FROM MovieLike ml
-                    WHERE ml.movie.id = m.id AND ml.member.id = :memberId AND ml.isLiked = true
-                ) THEN true
-                ELSE false
-            END,
-            COALESCE((SELECT mlc.likeCount FROM MovieLikeCount mlc WHERE mlc.movie.id = m.id), 0),
-            COALESCE(COUNT(r.id), 0)
-        )
-        FROM Movie m
-        LEFT JOIN m.reviews r
-        WHERE m.id IN :trendingMovieId AND (r.disabled = false OR r.id IS NULL)
-        GROUP BY m.id, m.title, m.poster, m.released
-        ORDER BY m.released DESC
-        """)
+            SELECT new net.pointofviews.movie.dto.response.MovieTrendingResponse(
+                m.id,
+                m.title,
+                m.poster,
+                m.released,
+                CASE
+                    WHEN :memberId IS NOT NULL AND EXISTS (
+                        SELECT 1
+                        FROM MovieLike ml
+                        WHERE ml.movie.id = m.id AND ml.member.id = :memberId AND ml.isLiked = true
+                    ) THEN true
+                    ELSE false
+                END,
+                COALESCE((SELECT mlc.likeCount FROM MovieLikeCount mlc WHERE mlc.movie.id = m.id), 0),
+                COALESCE(COUNT(r.id), 0)
+            )
+            FROM Movie m
+            LEFT JOIN m.reviews r
+            WHERE m.id IN :trendingMovieId AND (r.disabled = false OR r.id IS NULL)
+            GROUP BY m.id, m.title, m.poster, m.released
+            ORDER BY m.released DESC
+            """)
     List<MovieTrendingResponse> findAllTrendingMovie(
             @Param("trendingMovieId") List<Long> trendingMovieId,
             @Param("memberId") UUID memberId
     );
+
+    @Query(value = "SELECT max(m.id) FROM Movie m")
+    Optional<Long> findMaxMovieId();
 }

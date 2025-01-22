@@ -104,7 +104,7 @@ public class MovieController implements MovieSpecification {
                 .map(Member::getId)
                 .orElse(null);
 
-        MovieTrendingListResponse response = movieService.getTrendingMovies(memberId);
+        MovieTrendingListResponse response = movieService.findTrendingMovies(memberId);
         return BaseResponse.ok("OK", response);
     }
 }
