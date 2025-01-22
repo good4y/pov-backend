@@ -255,4 +255,39 @@ public class MovieServiceImplTest {
                 updateMoviePeopleRequest
         );
     }
+
+    @Nested
+    class FindLastMovieId {
+
+        @Nested
+        class Success {
+
+            @Test
+            void 마지막_영화_PK_검색(){
+                // given
+                Long lastId = 10L;
+                given(movieRepository.findMaxMovieId()).willReturn(Optional.of(lastId));
+
+                // when
+                Long response = movieService.findLastMovieId();
+
+                // then
+                Assertions.assertThat(response).isEqualTo(lastId);
+
+            }
+
+            @Test
+            void 영화가_없을_때_1_반환(){
+                // given
+                Optional<Long> empty = Optional.empty();
+                given(movieRepository.findMaxMovieId()).willReturn(empty);
+
+                // when
+                Long response = movieService.findLastMovieId();
+
+                // then
+                Assertions.assertThat(response).isEqualTo(1L);
+            }
+        }
+    }
 }
