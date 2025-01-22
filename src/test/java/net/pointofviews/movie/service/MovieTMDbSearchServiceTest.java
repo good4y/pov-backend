@@ -120,10 +120,7 @@ class MovieTMDbSearchServiceTest {
                 SearchReleaseApiResponse response = movieTMDbSearchService.searchReleaseDate(movieId);
 
                 // then
-                assertThat(response.results()).hasSize(1);
-                assertThat(response.results().get(0).iso_3166_1()).isEqualTo("US");
-                assertThat(response.results().get(0).release_dates()).hasSize(1);
-                assertThat(response.results().get(0).release_dates().get(0).certification()).isEqualTo("PG-13");
+                assertThat(response.results()).hasSize(0);
             }
 
             @Test
@@ -144,10 +141,7 @@ class MovieTMDbSearchServiceTest {
                 SearchReleaseApiResponse response = movieTMDbSearchService.searchReleaseDate(movieId);
 
                 // then
-                assertThat(response.results()).hasSize(1);
-                assertThat(response.results().get(0).iso_3166_1()).isEqualTo("FR");
-                assertThat(response.results().get(0).release_dates()).hasSize(1);
-                assertThat(response.results().get(0).release_dates().get(0).certification()).isEqualTo("Tous publics");
+                assertThat(response.results()).hasSize(0);
             }
 
             @Test

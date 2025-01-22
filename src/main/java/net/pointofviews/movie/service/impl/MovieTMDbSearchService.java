@@ -17,7 +17,6 @@ import org.springframework.web.client.RestClient;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -114,26 +113,28 @@ public class MovieTMDbSearchService implements MovieApiSearchService {
     public SearchReleaseApiResponse searchReleaseDate(String movieId) {
         SearchReleaseApiResponse response = searchApiReleaseDate(movieId);
 
-        SearchReleaseApiResponse.Result bestResult = response.results().stream()
-                .min(Comparator.comparingInt(result -> {
-                    if ("kr".equalsIgnoreCase(result.iso_3166_1())) {
-                        return 1;
-                    } else if ("us".equalsIgnoreCase(result.iso_3166_1())) {
-                        return 2;
-                    } else {
-                        return 3;
-                    }
-                }))
+        SearchReleaseApiResponse.Result koreanResult = response.results().parallelStream()
+                .filter(result -> "kr".equalsIgnoreCase(result.iso_3166_1()))
+                .findFirst()
                 .orElse(null);
 
-        if (bestResult == null) {
+        if (koreanResult == null) {
             return new SearchReleaseApiResponse(response.id(), List.of());
         }
 
-        return new SearchReleaseApiResponse(
-                response.id(),
-                List.of(new SearchReleaseApiResponse.Result(bestResult.iso_3166_1(), bestResult.release_dates()))
-        );
+        SearchReleaseApiResponse.Result.ReleaseDate filteredResults = koreanResult.release_dates()
+                .parallelStream()
+                .filter(releaseDate -> releaseDate.certification() != null && releaseDate.type() == 3)
+                .findFirst()
+                .orElse(null);
+
+        if (filteredResults == null) {
+            return new SearchReleaseApiResponse(response.id(), List.of());
+        }
+
+        SearchReleaseApiResponse.Result filtered = new SearchReleaseApiResponse.Result(koreanResult.iso_3166_1(), List.of(filteredResults));
+
+        return new SearchReleaseApiResponse(response.id(), List.of(filtered));
     }
 
     @Override
