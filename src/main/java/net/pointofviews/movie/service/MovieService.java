@@ -18,7 +18,9 @@ public interface MovieService {
 
     MovieListResponse readMovies(UUID memberId, Pageable pageable);
 
-    MovieTrendingListResponse getTrendingMovies(UUID memberId);
+    MovieTrendingListResponse findTrendingMovies(UUID memberId);
 
     void deleteAllMovies(List<Long> ids);
+
+    Long findLastMovieId();
 }

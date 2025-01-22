@@ -129,7 +129,7 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public MovieTrendingListResponse getTrendingMovies(UUID memberId) {
+    public MovieTrendingListResponse findTrendingMovies(UUID memberId) {
         List<Long> trendingMovieId = redisService.getSetMembers("trending").stream().map(Long::parseLong).toList();
 
         return new MovieTrendingListResponse(movieRepository.findAllTrendingMovie(trendingMovieId, memberId));
@@ -138,6 +138,11 @@ public class MovieServiceImpl implements MovieService {
     @Override
     public void deleteAllMovies(List<Long> ids) {
         movieRepository.deleteAllByIdInBatch(ids);
+    }
+
+    @Override
+    public Long findLastMovieId() {
+        return movieRepository.findMaxMovieId().orElse(1L);
     }
 
     private List<MovieGenre> convertStringsToMovieGenre(List<String> stringGenres) {
