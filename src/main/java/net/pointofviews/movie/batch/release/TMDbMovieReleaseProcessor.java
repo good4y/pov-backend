@@ -1,5 +1,6 @@
 package net.pointofviews.movie.batch.release;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.pointofviews.movie.batch.utils.ApiRateLimiter;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Slf4j
 @Component
@@ -20,6 +22,9 @@ public class TMDbMovieReleaseProcessor implements ItemProcessor<Movie, Movie> {
 
     private final MovieTMDbSearchService searchService;
     private final ApiRateLimiter batchApiRateLimiter;
+
+    @Getter
+    private final ConcurrentLinkedQueue<Long> moviesToDelete = new ConcurrentLinkedQueue<>();
 
     @Override
     public Movie process(Movie item) {
@@ -34,6 +39,12 @@ public class TMDbMovieReleaseProcessor implements ItemProcessor<Movie, Movie> {
             return item;
         }
         SearchReleaseApiResponse.Result.ReleaseDate bestResult = result.release_dates().get(0);
+
+
+        if (bestResult.certification().isEmpty() || !result.iso_3166_1().equals("KR")) {
+            moviesToDelete.add(item.getId());
+            return null;
+        }
 
         String releaseDate = bestResult.release_date();
         ZonedDateTime zonedDateTime = ZonedDateTime.parse(releaseDate);

@@ -19,9 +19,10 @@ public class MovieBatchConfig {
     private final JobRepository jobRepository;
 
     @Bean
-    public Job fetchMovieJob(Step tmdbMovieDiscoverStep, Flow parallelFlow) {
+    public Job fetchMovieJob(Step tmdbMovieDiscoverStep, Step tmdbMovieReleaseStep, Flow parallelFlow) {
         return new JobBuilder("fetchMovieJob", jobRepository)
                 .start(tmdbMovieDiscoverStep)
+                .next(tmdbMovieReleaseStep)
                 .next(parallelStep(parallelFlow))
                 .build();
     }
@@ -34,12 +35,13 @@ public class MovieBatchConfig {
     }
 
     @Bean
-    public Flow parallelFlow(Step tmdbMovieReleaseStep, Step tmdbMovieCountryStep,
-                             Step tmdbMovieCreditStep, Step tmdbMovieImageStep, TaskExecutor tmdbTaskExecutor) {
+    public Flow parallelFlow(Step tmdbMovieCountryStep,
+                             Step tmdbMovieCreditStep,
+                             Step tmdbMovieImageStep,
+                             TaskExecutor tmdbTaskExecutor) {
         return new FlowBuilder<Flow>("parallelFlow")
                 .split(tmdbTaskExecutor)
                 .add(
-                        new FlowBuilder<Flow>("releaseFlow").start(tmdbMovieReleaseStep).build(),
                         new FlowBuilder<Flow>("countryFlow").start(tmdbMovieCountryStep).build(),
                         new FlowBuilder<Flow>("creditFlow").start(tmdbMovieCreditStep).build(),
                         new FlowBuilder<Flow>("imageFlow").start(tmdbMovieImageStep).build()
