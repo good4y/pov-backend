@@ -22,8 +22,8 @@ public class TMDbMovieCountryReader {
     @Bean(name = "movieCountryJpaReader")
     @StepScope
     public JpaPagingItemReader<Movie> movieCountryJpaReader(EntityManagerFactory entityManagerFactory,
-                                                            @Value("#{jobExecutionContext['firstMoviePk']}") Long firstMoviePk,
-                                                            @Value("#{jobExecutionContext['lastMoviePk']}") Long lastMoviePk) {
+                                                            @Value("#{jobParameters['startMoviePk']}") Long startMoviePk,
+                                                            @Value("#{jobExecutionContext['endMoviePk']}") Long endMoviePk) {
         JpaPagingItemReader<Movie> reader = new JpaPagingItemReader<>() {
             @Override
             protected Movie doRead() throws Exception {
@@ -46,12 +46,12 @@ public class TMDbMovieCountryReader {
         reader.setQueryString("""
                     SELECT m FROM Movie m
                     WHERE m.countries IS EMPTY
-                      AND m.id BETWEEN :firstMoviePk AND :lastMoviePk
+                      AND m.id BETWEEN :startMoviePk AND :endMoviePk
                 """);
-        reader.setParameterValues(Map.of("firstMoviePk", firstMoviePk, "lastMoviePk", lastMoviePk));
+        reader.setParameterValues(Map.of("startMoviePk", startMoviePk, "endMoviePk", endMoviePk));
         reader.setPageSize(100);
 
-        log.info("Movie PK 범위로 Country 데이터를 읽습니다: firstMoviePk={}, lastMoviePk={}", firstMoviePk, lastMoviePk);
+        log.info("Movie PK 범위로 Country 데이터를 읽습니다: startMoviePk={}, endMoviePk={}", startMoviePk, endMoviePk);
         return reader;
     }
 }

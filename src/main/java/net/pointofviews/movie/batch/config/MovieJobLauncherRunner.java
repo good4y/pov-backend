@@ -3,6 +3,7 @@ package net.pointofviews.movie.batch.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.pointofviews.movie.batch.repository.JobExecutionRepository;
+import net.pointofviews.movie.service.impl.MovieServiceImpl;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -17,13 +18,14 @@ import java.time.LocalDate;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class JobLauncherRunner implements ApplicationRunner {
+public class MovieJobLauncherRunner implements ApplicationRunner {
 
     private final JobLauncher jobLauncher;
     private final Job fetchMovieJob;
     private final Job movieTrendingJob;
     private final JobExecutionRepository jobExecutionRepository;
     private final JobRepository jobRepository;
+    private final MovieServiceImpl movieService;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -39,8 +41,9 @@ public class JobLauncherRunner implements ApplicationRunner {
     private boolean runJob(Job job) {
         String startDate = calculateStartDate(job.getName());
         String endDate = calculateEndDate();
+        Long maxMoviePk = movieService.findLastMovieId();
 
-        if (startDate.equals(endDate) || isJobAlreadyExecuted(job, startDate, endDate)) {
+        if (startDate.equals(endDate) || isJobAlreadyExecuted(job, startDate, endDate, maxMoviePk)) {
             log.info("{} Job은 이미 실행된 기록이 있습니다.", job.getName());
             return true;
         }
@@ -49,6 +52,7 @@ public class JobLauncherRunner implements ApplicationRunner {
             JobParameters parameters = new JobParametersBuilder()
                     .addString("startDate", startDate)
                     .addString("endDate", endDate)
+                    .addLong("startMoviePk", maxMoviePk)
                     .toJobParameters();
 
             log.info("Job 실행: {} ({} ~ {})", job.getName(), startDate, endDate);
@@ -60,10 +64,11 @@ public class JobLauncherRunner implements ApplicationRunner {
         }
     }
 
-    private boolean isJobAlreadyExecuted(Job job, String startDate, String endDate) {
+    private boolean isJobAlreadyExecuted(Job job, String startDate, String endDate, Long maxMoviePk) {
         JobParameters parameters = new JobParametersBuilder()
                 .addString("startDate", startDate)
                 .addString("endDate", endDate)
+                .addLong("startMoviePk", maxMoviePk)
                 .toJobParameters();
 
         try {
