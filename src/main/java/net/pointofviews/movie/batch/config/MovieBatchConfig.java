@@ -19,11 +19,11 @@ public class MovieBatchConfig {
     private final JobRepository jobRepository;
 
     @Bean
-    public Job fetchMovieJob(Step tmdbMovieDiscoverStep, Step tmdbMovieReleaseStep, Flow parallelFlow) {
+    public Job fetchMovieJob(Step tmdbMovieDiscoverStep, Step tmdbMovieReleaseStep, Step parallelStep) {
         return new JobBuilder("fetchMovieJob", jobRepository)
                 .start(tmdbMovieDiscoverStep)
                 .next(tmdbMovieReleaseStep)
-                .next(parallelStep(parallelFlow))
+                .next(parallelStep)
                 .build();
     }
 
