@@ -43,11 +43,11 @@ public class TMDbMovieDiscoverReader implements ItemReader<List<SearchMovieDisco
         int page = currentPage.getAndIncrement();
         SearchMovieDiscoverApiResponse response = movieService.searchDiscoverMovie(startDate, endDate, page);
 
-        int totalPages = response.total_pages();
-
-        if (page > totalPages) {
+        if (response.results().isEmpty()) {
             return null;
         }
+
+        int totalPages = response.total_pages();
 
         log.info("Fetching page {} of {}", page, totalPages);
 
