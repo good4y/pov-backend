@@ -113,6 +113,7 @@ public class MovieTMDbSearchService implements MovieApiSearchService {
     public SearchReleaseApiResponse searchReleaseDate(String movieId) {
         SearchReleaseApiResponse response = searchApiReleaseDate(movieId);
 
+        // 한국 개봉 정보 유무 확인
         SearchReleaseApiResponse.Result koreanResult = response.results().parallelStream()
                 .filter(result -> "kr".equalsIgnoreCase(result.iso_3166_1()))
                 .findFirst()
@@ -122,17 +123,23 @@ public class MovieTMDbSearchService implements MovieApiSearchService {
             return new SearchReleaseApiResponse(response.id(), List.of());
         }
 
-        SearchReleaseApiResponse.Result.ReleaseDate filteredResults = koreanResult.release_dates()
+        // 한국 개봉 정보에서 영화관 개봉 여부
+        List<SearchReleaseApiResponse.Result.ReleaseDate> filteredReleaseDateResults = koreanResult.release_dates()
                 .parallelStream()
-                .filter(releaseDate -> releaseDate.certification() != null && releaseDate.type() == 3)
-                .findFirst()
-                .orElse(null);
+                .filter(releaseDate -> releaseDate.type() == 3)
+                .toList();
 
-        if (filteredResults == null) {
+        if (filteredReleaseDateResults.isEmpty()) {
             return new SearchReleaseApiResponse(response.id(), List.of());
         }
 
-        SearchReleaseApiResponse.Result filtered = new SearchReleaseApiResponse.Result(koreanResult.iso_3166_1(), List.of(filteredResults));
+        SearchReleaseApiResponse.Result.ReleaseDate filteredBestResult = filteredReleaseDateResults
+                .parallelStream()
+                .filter(result -> !result.certification().isEmpty())
+                .findFirst()
+                .orElse(filteredReleaseDateResults.get(0));
+
+        SearchReleaseApiResponse.Result filtered = new SearchReleaseApiResponse.Result(koreanResult.iso_3166_1(), List.of(filteredBestResult));
 
         return new SearchReleaseApiResponse(response.id(), List.of(filtered));
     }

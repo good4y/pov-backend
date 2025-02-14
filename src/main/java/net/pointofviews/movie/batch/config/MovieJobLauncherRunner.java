@@ -11,12 +11,14 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
 @Slf4j
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class MovieJobLauncherRunner implements ApplicationRunner {
 

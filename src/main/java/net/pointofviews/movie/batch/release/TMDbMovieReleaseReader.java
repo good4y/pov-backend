@@ -17,34 +17,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TMDbMovieReleaseReader {
 
-    private int totalItemsRead = 0;
-
-    @Bean(name = "movieReleaseJpaReader")
+    @Bean
     @StepScope
     public JpaPagingItemReader<Movie> movieReleaseJpaReader(EntityManagerFactory entityManagerFactory,
-                                                            @Value("#{jobParameters['startMoviePk']}") Long startMoviePk,
-                                                            @Value("#{jobExecutionContext['endMoviePk']}") Long endMoviePk) {
-        JpaPagingItemReader<Movie> reader = new JpaPagingItemReader<>() {
-            @Override
-            protected Movie doRead() throws Exception {
-                Movie movie = super.doRead();
-                if (movie != null) {
-                    totalItemsRead++;
-                } else {
-                    log.info("Total items read: {}", totalItemsRead);
-                }
-                return movie;
-            }
+                                                            @Value("#{stepExecutionContext['minId']}") Long startMoviePk,
+                                                            @Value("#{stepExecutionContext['maxId']}") Long endMoviePk) {
+        JpaPagingItemReader<Movie> reader = new JpaPagingItemReader<>();
 
-            @Override
-            public int getPage() {
-                return 0;
-            }
-
-        };
         reader.setEntityManagerFactory(entityManagerFactory);
-
-        reader.setQueryString("SELECT m FROM Movie m WHERE m.id BETWEEN :startMoviePk AND :endMoviePk AND m.released IS NULL");
+        reader.setQueryString("SELECT m FROM Movie m WHERE m.id BETWEEN :startMoviePk AND :endMoviePk");
         reader.setParameterValues(Map.of("startMoviePk", startMoviePk, "endMoviePk", endMoviePk));
         reader.setPageSize(100);
 

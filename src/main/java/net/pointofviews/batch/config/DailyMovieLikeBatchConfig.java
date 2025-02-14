@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Configuration
-@EnableBatchProcessing
 @RequiredArgsConstructor
 public class DailyMovieLikeBatchConfig {
 
@@ -47,8 +46,6 @@ public class DailyMovieLikeBatchConfig {
 
     @Bean
     public Job dailyMovieLikeJob(JobRepository jobRepository) throws Exception {
-        log.info("DailyMovieLikeJob 초기화 중");
-
         return new JobBuilder("dailyMovieLikeJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .start(dailyMovieLikeStep(jobRepository))
@@ -57,8 +54,6 @@ public class DailyMovieLikeBatchConfig {
 
     @Bean
     public Step dailyMovieLikeStep(JobRepository jobRepository) throws Exception {
-        log.info("DailyMovieLikeStep 초기화 중");
-
         return new StepBuilder("dailyMovieLikeStep", jobRepository)
                 .<DailyMovieLikeDto, DailyMovieLike>chunk(CHUNK_SIZE, transactionManager)
                 .reader(extractMovieLikeItemReader())
@@ -69,8 +64,6 @@ public class DailyMovieLikeBatchConfig {
 
     @Bean
     public JdbcPagingItemReader<DailyMovieLikeDto> extractMovieLikeItemReader() throws Exception {
-        log.info("extractMovieLikeItemReader 시작: 영화 좋아요 데이터 읽기");
-
         return new JdbcPagingItemReaderBuilder<DailyMovieLikeDto>()
                 .name("extractMovieLikeItemReader")
                 .dataSource(dataSource)

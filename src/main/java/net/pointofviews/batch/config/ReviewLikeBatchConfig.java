@@ -15,7 +15,6 @@ import net.pointofviews.review.repository.ReviewLikeRepository;
 import net.pointofviews.review.repository.ReviewRepository;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -30,7 +29,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Set;
@@ -38,11 +36,9 @@ import java.util.UUID;
 
 @Slf4j
 @Configuration
-@EnableBatchProcessing
 @RequiredArgsConstructor
 public class ReviewLikeBatchConfig {
 
-    private final DataSource dataSource;
     private final PlatformTransactionManager transactionManager;
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
@@ -54,8 +50,6 @@ public class ReviewLikeBatchConfig {
 
     @Bean
     public Job reviewLikeJob(JobRepository jobRepository) {
-        log.trace("ReviewLikeJob 초기화 중");
-
         return new JobBuilder("reviewLikeJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .start(reviewLikeStep(jobRepository))
@@ -65,8 +59,6 @@ public class ReviewLikeBatchConfig {
     @Bean
     @JobScope
     public Step reviewLikeStep(JobRepository jobRepository) {
-        log.trace("ReviewLikeStep 초기화 중");
-
         return new StepBuilder("reviewLikeStep", jobRepository)
                 .<String, ReviewLike>chunk(CHUNK_SIZE, transactionManager)
                 .reader(reviewLikeRedisReader())

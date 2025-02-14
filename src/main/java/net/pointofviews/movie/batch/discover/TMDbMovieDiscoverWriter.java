@@ -99,7 +99,7 @@ public class TMDbMovieDiscoverWriter implements ItemWriter<List<BatchDiscoverMov
     private void logFailedMovies(List<Movie> failedMovies) {
         if (!failedMovies.isEmpty()) {
             failedMovies.forEach(movie ->
-                    log.info("- {} (TMDB ID: {})", movie.getTitle(), movie.getTmdbId()));
+                    log.info("저장 실패 - {} (TMDB ID: {})", movie.getTitle(), movie.getTmdbId()));
         }
     }
 

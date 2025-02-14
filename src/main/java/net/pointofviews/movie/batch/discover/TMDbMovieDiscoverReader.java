@@ -1,6 +1,5 @@
 package net.pointofviews.movie.batch.discover;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.pointofviews.movie.batch.utils.ApiRateLimiter;
 import net.pointofviews.movie.dto.response.SearchMovieDiscoverApiResponse;
@@ -17,42 +16,40 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Component
 @StepScope
-@RequiredArgsConstructor
 public class TMDbMovieDiscoverReader implements ItemReader<List<SearchMovieDiscoverApiResponse.MovieResult>> {
 
     private final MovieTMDbSearchService movieService;
 
-    @Value("#{jobParameters['startDate']}")
-    private String startDateStr;
+    private final LocalDate startDate;
 
-    @Value("#{jobParameters['endDate']}")
-    private String endDateStr;
-
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private final LocalDate endDate;
 
     private final ApiRateLimiter batchRateLimiter;
+
     private final AtomicInteger currentPage = new AtomicInteger(1);
 
-    private int totalPages = Integer.MAX_VALUE;
+    public TMDbMovieDiscoverReader(MovieTMDbSearchService movieService, ApiRateLimiter batchRateLimiter,
+                                   @Value("#{jobParameters['startDate']}") String startDateStr,
+                                   @Value("#{jobParameters['endDate']}") String endDateStr) {
+        this.movieService = movieService;
+        this.batchRateLimiter = batchRateLimiter;
+        this.startDate = LocalDate.parse(startDateStr);
+        this.endDate = LocalDate.parse(endDateStr);
+    }
 
     @Override
     public List<SearchMovieDiscoverApiResponse.MovieResult> read() {
-        if (startDate == null || endDate == null) {
-            this.startDate = LocalDate.parse(startDateStr);
-            this.endDate = LocalDate.parse(endDateStr);
-        }
-
+        batchRateLimiter.limit();
         int page = currentPage.getAndIncrement();
+        SearchMovieDiscoverApiResponse response = movieService.searchDiscoverMovie(startDate, endDate, page);
 
-        if (page > totalPages) {
+        if (response.results().isEmpty()) {
             return null;
         }
 
+        int totalPages = response.total_pages();
+
         log.info("Fetching page {} of {}", page, totalPages);
-        batchRateLimiter.limit();
-        SearchMovieDiscoverApiResponse response = movieService.searchDiscoverMovie(startDate, endDate, page);
-        totalPages = response.total_pages();
 
         return response.results();
     }

@@ -15,7 +15,6 @@ import net.pointofviews.movie.repository.MovieLikeRepository;
 import net.pointofviews.movie.repository.MovieRepository;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -30,7 +29,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Set;
@@ -38,11 +36,9 @@ import java.util.UUID;
 
 @Slf4j
 @Configuration
-@EnableBatchProcessing
 @RequiredArgsConstructor
 public class MovieLikeBatchConfig {
 
-    private final DataSource dataSource;
     private final PlatformTransactionManager transactionManager;
     private final MovieRepository movieRepository;
     private final MovieLikeRepository movieLikeRepository;
@@ -96,7 +92,7 @@ public class MovieLikeBatchConfig {
 
     @Bean
     @StepScope
-    public MovieLikeRedisReader movieLikeRedisReader(){
+    public MovieLikeRedisReader movieLikeRedisReader() {
         return new MovieLikeRedisReader(redisService);
     }
 
@@ -109,7 +105,7 @@ public class MovieLikeBatchConfig {
         private final RedisService redisService;
 
         @Override
-        public MovieLike process(String key){
+        public MovieLike process(String key) {
             try {
                 // MovieLiked:memberId 형식에서 데이터 추출
                 String[] parts = key.split(":");
