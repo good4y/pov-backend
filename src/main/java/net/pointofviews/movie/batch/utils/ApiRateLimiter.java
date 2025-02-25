@@ -1,24 +1,40 @@
 package net.pointofviews.movie.batch.utils;
 
-import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.stereotype.Component;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
+@Component
 public class ApiRateLimiter {
-    private static final long CALL_INTERVAL_MILLIS = 20; // 20ms
-    private final AtomicLong lastCallTime = new AtomicLong(0);
+    private static final int MAX_REQUESTS_PER_SECOND = 50;
+    private final Semaphore semaphore = new Semaphore(MAX_REQUESTS_PER_SECOND);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    public ApiRateLimiter() {
+        scheduler.scheduleAtFixedRate(() -> {
+            synchronized (semaphore) {
+                int currentPermits = semaphore.availablePermits();
+
+                if (currentPermits < MAX_REQUESTS_PER_SECOND) {
+                    semaphore.release(MAX_REQUESTS_PER_SECOND - currentPermits);
+                }
+            }
+        }, 1, 1, TimeUnit.SECONDS);
+    }
 
     public void limit() {
-        long currentTime = System.currentTimeMillis();
-        long elapsedTime = currentTime - lastCallTime.get();
-
-        if (elapsedTime < CALL_INTERVAL_MILLIS) {
-            try {
-                Thread.sleep(CALL_INTERVAL_MILLIS - elapsedTime); // 남은 시간만큼 대기
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Rate limiter interrupted", e);
-            }
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Rate limiter interrupted", e);
         }
+    }
 
-        lastCallTime.set(System.currentTimeMillis());
+    public void shutdown() {
+        scheduler.shutdown();
     }
 }
