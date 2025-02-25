@@ -11,6 +11,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
+import java.util.List;
 
 @Configuration
 public class FirebaseConfig {
@@ -19,10 +20,16 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
+        List<FirebaseApp> firebaseApps = FirebaseApp.getApps();
+        if (!firebaseApps.isEmpty()) {
+            return firebaseApps.get(0);
+        }
+
         Resource resource = new ClassPathResource(firebaseConfigPath);
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(resource.getInputStream()))
                 .build();
+
         return FirebaseApp.initializeApp(options);
     }
 
