@@ -38,42 +38,32 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
      * 검색
      */
     @Query(value = """
-            SELECT m.id AS id,
-                   m.title AS title,
-                   m.poster AS poster,
-                   m.released AS released,
-                   CASE WHEN :memberId IS NOT NULL AND EXISTS (
-                       SELECT 1 FROM movie_like ml
-                       WHERE ml.movie_id = m.id
-                         AND ml.member_id = :memberId
-                         AND ml.is_liked = true
-                   ) THEN true ELSE false END AS isLiked,
-                   COALESCE((
-                       SELECT mlc.like_count
-                       FROM movie_like_count mlc
-                       WHERE mlc.movie_id = m.id
-                   ), 0) AS movieLikeCount,
-                   (SELECT COUNT(*)
-                    FROM review r
-                    WHERE r.movie_id = m.id AND r.disabled = false) AS movieReviewCount
+            SELECT m.id, m.title, m.poster, m.released,
+                   COALESCE(mlc.like_count, 0) AS movieLikeCount,
+                   COUNT(DISTINCT r.id) AS movieReviewCount,
+                   CASE WHEN :memberId is null THEN FALSE
+                                   WHEN :memberId = ml.member_id THEN ml.is_liked
+                                   END as isLiked
             FROM movie m
-            WHERE MATCH(m.title) AGAINST(:query IN BOOLEAN MODE)
-               OR EXISTS (
-                   SELECT 1
-                   FROM people p
-                   JOIN movie_cast mc ON mc.people_id = p.id
-                   WHERE MATCH(p.name) AGAINST(:query IN BOOLEAN MODE)
-                     AND mc.movie_id = m.id
-               )
-               OR EXISTS (
-                   SELECT 1
-                   FROM people p
-                   JOIN movie_crew mcr ON mcr.people_id = p.id
-                   WHERE MATCH(p.name) AGAINST(:query IN BOOLEAN MODE)
-                     AND mcr.movie_id = m.id
-               )
-            """,
-            nativeQuery = true)
+            LEFT JOIN movie_like_count mlc ON m.id = mlc.movie_id
+            LEFT JOIN review r ON m.id = r.movie_id AND r.disabled = false
+            LEFT JOIN movie_like ml ON ml.movie_id = m.id AND ml.member_id = :memberId
+            WHERE m.id IN (
+                SELECT DISTINCT movie_id FROM (
+                    SELECT id AS movie_id FROM movie WHERE MATCH(title) AGAINST(:query IN BOOLEAN MODE)
+                    UNION ALL
+                    SELECT mc.movie_id FROM movie_cast mc
+                    JOIN people p ON mc.people_id = p.id
+                    WHERE MATCH(p.name) AGAINST(:query IN BOOLEAN MODE)
+                    UNION ALL
+                    SELECT mcr.movie_id FROM movie_crew mcr
+                    JOIN people p ON mcr.people_id = p.id
+                    WHERE MATCH(p.name) AGAINST(:query IN BOOLEAN MODE)
+                ) subquery
+            )
+            GROUP BY m.id, m.title, m.poster, m.released, mlc.like_count, is_liked
+            ORDER BY m.released DESC
+            """, nativeQuery = true)
     Slice<Object[]> searchMoviesByTitleOrPeople(@Param("query") String query, @Param("memberId") UUID memberId, Pageable pageable);
 
     boolean existsByTmdbId(Integer id);
