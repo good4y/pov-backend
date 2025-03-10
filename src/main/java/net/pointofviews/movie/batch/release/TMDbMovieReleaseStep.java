@@ -52,7 +52,7 @@ public class TMDbMovieReleaseStep {
         TaskExecutorPartitionHandler partitionHandler = new TaskExecutorPartitionHandler();
         partitionHandler.setStep(tmdbMovieReleaseStep());
         partitionHandler.setTaskExecutor(tmdbTaskExecutor);
-        partitionHandler.setGridSize(6);
+        partitionHandler.setGridSize(8);
         return partitionHandler;
     }
 
