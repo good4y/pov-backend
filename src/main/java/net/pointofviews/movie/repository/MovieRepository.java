@@ -39,11 +39,13 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
      */
     @Query(value = """
             SELECT m.id, m.title, m.poster, m.released,
-                   COALESCE(mlc.like_count, 0) AS movieLikeCount,
-                   COUNT(DISTINCT r.id) AS movieReviewCount,
-                   CASE WHEN :memberId is null THEN FALSE
-                                   WHEN :memberId = ml.member_id THEN ml.is_liked
-                                   END as isLiked
+                    COALESCE(mlc.like_count, 0) AS movieLikeCount,
+                    COUNT(DISTINCT r.id) AS movieReviewCount,
+                    CASE
+                        WHEN :memberId is null THEN FALSE
+                        WHEN :memberId = ml.member_id THEN ml.is_liked
+                        ELSE FALSE
+                    END as isLiked
             FROM movie m
             LEFT JOIN movie_like_count mlc ON m.id = mlc.movie_id
             LEFT JOIN review r ON m.id = r.movie_id AND r.disabled = false
