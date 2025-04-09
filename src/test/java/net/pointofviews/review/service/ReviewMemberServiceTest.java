@@ -112,7 +112,7 @@ class ReviewMemberServiceTest {
                         false
                 );
 
-                doNothing().when(reviewNotificationService).sendReviewNotifications(any(Review.class));
+                doNothing().when(reviewNotificationService).produceReviewNotice(any(Review.class));
 
                 // when & then
                 assertSoftly(softly -> {
@@ -138,7 +138,7 @@ class ReviewMemberServiceTest {
                         false
                 );
 
-                doNothing().when(reviewNotificationService).sendReviewNotifications(any(Review.class));
+                doNothing().when(reviewNotificationService).produceReviewNotice(any(Review.class));
 
                 // when & then
                 assertSoftly(softly -> {

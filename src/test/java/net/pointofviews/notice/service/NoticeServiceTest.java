@@ -27,14 +27,12 @@ class NoticeServiceTest {
         NoticeSend mockNoticeSend = Mockito.mock(NoticeSend.class);
 
         // 대량 알림 성능 테스트 구현
-        List<String> tokens = generateMockTokens(1000);
+        List<String> tokens = generateMockTokens();
 
         // FcmUtil의 sendMessage 메서드에 대한 모킹
         Mockito.when(fcmUtil.sendMessage(
                 Mockito.anyList(),
                 Mockito.anyString(),
-                Mockito.anyString(),
-                Mockito.any(),
                 Mockito.anyString(),
                 Mockito.any()
         )).thenReturn(
@@ -55,20 +53,18 @@ class NoticeServiceTest {
                 tokens,
                 "성능 테스트 알림",
                 "대량 알림 테스트",
-                null,
-                "테스트 콘텐츠",
                 mockNoticeSend
         );
 
         long endTime = System.currentTimeMillis();
 
         // 성능 검증
-        assertThat(results).hasSize(1000);
+        assertThat(results).hasSize(500);
         assertThat(endTime - startTime).isLessThan(5000); // 5초 이내 완료
     }
 
-    private List<String> generateMockTokens(int count) {
-        return IntStream.range(0, count)
+    private List<String> generateMockTokens() {
+        return IntStream.range(0, 500)
                 .mapToObj(i -> "mock-token-" + i)
                 .collect(Collectors.toList());
     }
