@@ -68,6 +68,8 @@ dependencies {
     // Fcm
     implementation 'com.google.firebase:firebase-admin:9.4.1'
 
+    implementation 'org.apache.commons:commons-pool2'
+
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:mysql'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'

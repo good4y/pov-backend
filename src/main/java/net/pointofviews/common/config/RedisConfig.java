@@ -1,5 +1,8 @@
 package net.pointofviews.common.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -13,7 +16,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
 
@@ -26,39 +28,35 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private int port;
 
-    // redis 연결
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
         redisStandaloneConfiguration.setHostName(host);
         redisStandaloneConfiguration.setPort(port);
 
-        LettuceConnectionFactory factory = new LettuceConnectionFactory(redisStandaloneConfiguration);
-        return factory;
+        return new LettuceConnectionFactory(redisStandaloneConfiguration);
     }
 
-    // 데이터 처리 템플릿 구성
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-
-        // Redis를 연결
         redisTemplate.setConnectionFactory(redisConnectionFactory());
 
-        // 기본적으로 직렬화를 수행
-        redisTemplate.setDefaultSerializer(new StringRedisSerializer());
-
+        // 키는 단순 문자열로 직렬화
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
-        // 트랜잭션
-        redisTemplate.setEnableTransactionSupport(true);
+        // 값은 JSON으로 직렬화 (GenericJackson2JsonRedisSerializer 사용)
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        GenericJackson2JsonRedisSerializer jsonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
+        redisTemplate.setValueSerializer(jsonSerializer);
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(jsonSerializer);
+
+        redisTemplate.setDefaultSerializer(jsonSerializer);
 
         redisTemplate.afterPropertiesSet();
-
-
         return redisTemplate;
     }
 
