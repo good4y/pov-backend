@@ -66,7 +66,6 @@ public class ReviewMemberServiceImpl implements ReviewMemberService {
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> movieNotFound(movieId));
 
-        // 리뷰 생성 및 저장
         Review review = Review.builder()
                 .title(request.title())
                 .contents(request.contents())
@@ -78,7 +77,6 @@ public class ReviewMemberServiceImpl implements ReviewMemberService {
 
         reviewRepository.save(review);
 
-        // 키워드 저장
         if (!request.keywords().isEmpty()) {
             request.keywords().forEach(keywordName -> {
                 String keywordCode = commonCodeService.convertCommonCodeNameToCommonCode(
@@ -94,8 +92,7 @@ public class ReviewMemberServiceImpl implements ReviewMemberService {
             });
         }
 
-        // 알림 발송
-        reviewNotificationService.sendReviewNotifications(review);
+        reviewNotificationService.produceReviewNotice(review);
     }
 
     @Override
@@ -209,7 +206,7 @@ public class ReviewMemberServiceImpl implements ReviewMemberService {
         boolean isLiked = reviewLikeRepository.getIsLikedByReviewId(memberId, reviewId).orElse(false);
         List<String> keywords = reviewKeywordLinkRepository.findKeywordsByReviewId(reviewId);
 
-        ReadReviewDetailResponse response = new ReadReviewDetailResponse(
+        return new ReadReviewDetailResponse(
                 review.getTitle(),
                 review.getContents(),
                 review.getMember().getNickname(),
@@ -221,8 +218,6 @@ public class ReviewMemberServiceImpl implements ReviewMemberService {
                 review.isSpoiler(),
                 keywords
         );
-
-        return response;
     }
 
     @Override
