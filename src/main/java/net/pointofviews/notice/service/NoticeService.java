@@ -16,4 +16,6 @@ public interface NoticeService {
     List<ReadNoticeResponse> findNotices(UUID memberId);
 
     void updateNotice(UUID memberId, Long noticeId);
+
+    String getNoticeMessage(SendNoticeRequest request);
 }

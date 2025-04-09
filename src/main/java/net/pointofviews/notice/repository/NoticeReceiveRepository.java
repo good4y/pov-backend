@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface NoticeReceiveRepository extends JpaRepository<NoticeReceive, Long> {
-    List<NoticeReceive> findByMemberIdOrderByCreatedAtDesc(UUID memberId);
     Optional<NoticeReceive> findByIdAndMemberId(Long id, UUID memberId);
 
     @Query("SELECT DISTINCT nr FROM NoticeReceive nr " +
